@@ -163,6 +163,23 @@ export async function POST(req: NextRequest) {
     if (process.env.OPENAI_API_KEY) {
       try {
         const call = streamVideo.video.call("default", extractedCallId);
+        // Avoid spawning duplicate AI agents if the webhook fires multiple times.
+        const participantQuery = await call.queryCallParticipants({
+          filter_conditions: { user_id: existingAgent.id },
+        });
+        const aiAlreadyPresent = (participantQuery.participants || []).some(
+          (p) => p.user?.id === existingAgent.id
+        );
+
+        if (aiAlreadyPresent) {
+          console.log("✅ AI agent already in call, skipping connectOpenAi", {
+            meetingId,
+            callId: extractedCallId,
+            agentId: existingAgent.id,
+          });
+          return NextResponse.json({ status: "ok" });
+        }
+
         const realtimeClient = await streamVideo.video.connectOpenAi({
           call,
           openAiApiKey: process.env.OPENAI_API_KEY!,
