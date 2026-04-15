@@ -45,26 +45,27 @@ export const CallConnect = ({
     // Initialize Stream client
     useEffect(() => {
         let isCancelled = false;
+        let activeClient: StreamVideoClient | undefined;
 
         const initClient = async () => {
             const token = await generateToken();
             if (isCancelled) return;
 
-            const _client = new StreamVideoClient({
+            activeClient = new StreamVideoClient({
                 apiKey: process.env.NEXT_PUBLIC_STREAM_VIDEO_API_KEY!,
                 user: { id: userId, name: userName, image: userImage },
                 token,
             });
 
             if (isCancelled) return;
-            setClient(_client);
+            setClient(activeClient);
         };
 
         void initClient();
 
         return () => {
             isCancelled = true;
-            client?.disconnectUser();
+            activeClient?.disconnectUser();
         };
     }, [userId, userName, userImage, generateToken]);
 
