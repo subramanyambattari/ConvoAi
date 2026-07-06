@@ -78,7 +78,7 @@ export const PricingCard = ({
     return (
         <div className={cn(pricingCardVariants({ variant }), className, "border")}>
             <div className="flex items-end gap-x-4 justify-between">
-                <div className="flex flex-col gap-y-2">
+                <div className="flex min-w-0 flex-col gap-y-2">
                     <div className="flex items-center gap-x-2">
                         <h6 className="font-medium text-xl">{title}</h6>
                         {badge? (
@@ -88,7 +88,7 @@ export const PricingCard = ({
                         ): null}
                     </div>
                     <p
-                        className={cn("text-xs",
+                        className={cn("text-xs whitespace-normal break-words",
                             pricingCardSecondaryTextVariants({variant})
                         )}
                     >
@@ -128,11 +128,13 @@ export const PricingCard = ({
                     )}
                 >
                     {features?.map((feature, index) => (
-                        <li key={index} className="flex items-center gap-x-2.5">
+                        <li key={index} className="flex items-start gap-x-2.5">
                             <CircleCheckIcon 
-                                className={cn(pricingCardIconVariants({ variant }))}
+                                className={cn(pricingCardIconVariants({ variant }), "shrink-0")}
                             />
-                            {feature}
+                            <span className="min-w-0 whitespace-normal break-words">
+                                {feature}
+                            </span>
                         </li>
                     ))}
                 </ul>
