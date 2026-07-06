@@ -2,20 +2,33 @@ import "server-only"
 
 import { StreamClient } from "@stream-io/node-sdk";
 
-// Prefer server-side API key; fall back to NEXT_PUBLIC if needed.
-const SERVER_STREAM_API_KEY =
-  process.env.STREAM_VIDEO_API_KEY || process.env.NEXT_PUBLIC_STREAM_VIDEO_API_KEY;
+let streamVideoClient: StreamClient | null = null;
 
-if (!SERVER_STREAM_API_KEY) {
-  // This will surface clearly in logs if misconfigured.
-  throw new Error("STREAM_VIDEO_API_KEY (or NEXT_PUBLIC_STREAM_VIDEO_API_KEY) is not set");
-}
+const getStreamVideoClient = () => {
+  if (streamVideoClient) return streamVideoClient;
 
-if (!process.env.STREAM_VIDEO_SECRET_KEY) {
-  throw new Error("STREAM_VIDEO_SECRET_KEY is not set");
-}
+  // Prefer server-side API key; fall back to NEXT_PUBLIC if needed.
+  const apiKey =
+    process.env.STREAM_VIDEO_API_KEY || process.env.NEXT_PUBLIC_STREAM_VIDEO_API_KEY;
+  const secretKey = process.env.STREAM_VIDEO_SECRET_KEY;
 
-export const streamVideo = new StreamClient(
-  SERVER_STREAM_API_KEY,
-  process.env.STREAM_VIDEO_SECRET_KEY
-);
+  if (!apiKey) {
+    throw new Error("STREAM_VIDEO_API_KEY (or NEXT_PUBLIC_STREAM_VIDEO_API_KEY) is not set");
+  }
+
+  if (!secretKey) {
+    throw new Error("STREAM_VIDEO_SECRET_KEY is not set");
+  }
+
+  streamVideoClient = new StreamClient(apiKey, secretKey);
+  return streamVideoClient;
+};
+
+export const streamVideo = new Proxy({} as StreamClient, {
+  get(_target, prop) {
+    const client = getStreamVideoClient();
+    const value = Reflect.get(client, prop);
+
+    return typeof value === "function" ? value.bind(client) : value;
+  },
+});
